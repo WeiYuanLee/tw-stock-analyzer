@@ -20,7 +20,7 @@ const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');
 
 // Initialize tables
-export function initDatabase() {
+export async function initDatabase() {
   // Users table
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -28,8 +28,10 @@ export function initDatabase() {
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       name TEXT,
+      role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin', 'superadmin')),
       membership_level TEXT DEFAULT 'free' CHECK(membership_level IN ('free', 'pro', 'vip')),
       membership_expire_at TEXT,
+      is_active INTEGER DEFAULT 1,
       email_verified INTEGER DEFAULT 0,
       verification_token TEXT,
       reset_token TEXT,
@@ -38,6 +40,31 @@ export function initDatabase() {
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate existing database - add missing columns
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin', 'superadmin'))`);
+  } catch (e) {
+    // Column already exists
+  }
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1`);
+  } catch (e) {
+    // Column already exists
+  }
+
+  // Create default admin user if not exists
+  const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get(process.env.ADMIN_EMAIL || 'admin@twstock.com');
+  if (!adminExists) {
+    const { hashPassword } = await import('../utils/password.js');
+    const adminPasswordHash = await hashPassword(process.env.ADMIN_PASSWORD || 'admin123');
+    const adminId = 'admin-' + Date.now();
+    db.prepare(`
+      INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 'superadmin', 1, datetime('now'), datetime('now'))
+    `).run(adminId, process.env.ADMIN_EMAIL || 'admin@twstock.com', adminPasswordHash, 'Admin');
+    console.log('✅ Default admin account created');
+  }
 
   // User watchlist table
   db.exec(`

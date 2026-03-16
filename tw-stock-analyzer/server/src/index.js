@@ -14,6 +14,7 @@ import paymentRoutes from './routes/payment.js';
 import alertsRoutes from './routes/alerts.js';
 import stocksRoutes from './routes/stocks.js';
 import aiRoutes from './routes/ai.js';
+import adminRoutes from './routes/admin.js';
 
 // Database initialization
 import { initDatabase } from './models/db.js';
@@ -37,7 +38,7 @@ app.use(cors({
 app.use(express.json());
 
 // Initialize database
-initDatabase();
+await initDatabase();
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -49,6 +50,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/stocks', stocksRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
