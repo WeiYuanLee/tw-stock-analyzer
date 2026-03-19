@@ -15,6 +15,7 @@ import alertsRoutes from './routes/alerts.js';
 import stocksRoutes from './routes/stocks.js';
 import aiRoutes from './routes/ai.js';
 import adminRoutes from './routes/admin.js';
+import shioajiRoutes from './routes/shioaji.js';
 
 // Database initialization
 import { initDatabase } from './models/db.js';
@@ -51,6 +52,7 @@ app.use('/api/alerts', alertsRoutes);
 app.use('/api/stocks', stocksRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/shioaji', shioajiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
