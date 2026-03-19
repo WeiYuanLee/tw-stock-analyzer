@@ -10,6 +10,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 
 import shioaji_client
+import cache
 
 # 載入環境變數
 load_dotenv()
@@ -210,6 +211,50 @@ def tickers():
     except Exception as e:
         logger.error(f"股票清單 API 錯誤: {str(e)}")
         return error_response('取得股票清單失敗', str(e), 500)
+
+
+# ==================== 快取管理 ====================
+
+@app.route('/api/cache/cleanup', methods=['POST'])
+def cache_cleanup():
+    """
+    清理過期快取
+    POST /api/cache/cleanup
+    """
+    try:
+        deleted = cache.cleanup_expired_cache()
+        return success_response({'deleted': deleted}, f'已清理 {deleted} 筆過期快取')
+    except Exception as e:
+        logger.error(f"清理快取 API 錯誤: {str(e)}")
+        return error_response('清理快取失敗', str(e), 500)
+
+
+@app.route('/api/cache/clear', methods=['POST'])
+def cache_clear():
+    """
+    清除所有快取
+    POST /api/cache/clear
+    """
+    try:
+        cache.clear_all_cache()
+        return success_response(None, '已清除所有快取')
+    except Exception as e:
+        logger.error(f"清除快取 API 錯誤: {str(e)}")
+        return error_response('清除快取失敗', str(e), 500)
+
+
+@app.route('/api/cache/stats', methods=['GET'])
+def cache_stats():
+    """
+    取得快取統計
+    GET /api/cache/stats
+    """
+    try:
+        stats = cache.get_cache_stats()
+        return success_response(stats)
+    except Exception as e:
+        logger.error(f"快取統計 API 錯誤: {str(e)}")
+        return error_response('取得快取統計失敗', str(e), 500)
 
 
 # ==================== 錯誤處理 ====================

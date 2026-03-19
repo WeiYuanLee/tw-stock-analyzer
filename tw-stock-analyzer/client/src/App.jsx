@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import StockAnalysis from './pages/StockAnalysis';
+import HeatmapPage from './pages/HeatmapPage';
 import AIAssistant from './pages/AIAssistant';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
@@ -95,6 +96,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <StockAnalysis />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/heatmap" 
+                element={
+                  <ProtectedRoute>
+                    <HeatmapPage />
                   </ProtectedRoute>
                 } 
               />

@@ -45,6 +45,12 @@ function Navbar() {
                     股票分析
                   </Link>
                   <Link 
+                    to="/heatmap" 
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
+                    熱力圖
+                  </Link>
+                  <Link 
                     to="/ai" 
                     className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
                   >

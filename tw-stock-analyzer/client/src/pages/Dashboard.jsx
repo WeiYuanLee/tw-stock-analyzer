@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore, useWatchlistStore, useBookmarksStore } from '../store';
 import { subscriptionAPI } from '../services/api';
 import { DevAd } from '../components/AdSense';
+import StockAutocomplete from '../components/StockAutocomplete';
 
 function Dashboard() {
   const { user } = useAuthStore();
@@ -195,15 +196,17 @@ function Dashboard() {
           <h3 className="text-lg font-semibold mb-4">我的自選股</h3>
           
           {/* Add Stock Form */}
-          <form onSubmit={handleAddStock} className="flex gap-2 mb-6">
-            <input
-              type="text"
+          <form onSubmit={handleAddStock} className="mb-6">
+            <StockAutocomplete
               value={newStockCode}
-              onChange={(e) => setNewStockCode(e.target.value.toUpperCase())}
-              placeholder="輸入股票代碼 (如: 2330)"
-              className="input-field flex-1"
+              onChange={setNewStockCode}
+              placeholder="輸入股票代碼或名稱"
+              onSelect={(stock) => {
+                setNewStockCode(stock.code);
+              }}
+              className="mb-2"
             />
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary w-full">
               新增
             </button>
           </form>

@@ -12,6 +12,9 @@ from typing import Optional, Dict, List, Any
 import shioaji as sj
 from dotenv import load_dotenv
 
+# 載入快取模組
+import cache
+
 # 載入環境變數
 load_dotenv()
 
@@ -110,11 +113,18 @@ class ShioajiClient:
     
     def get_quote(self, code: str) -> Dict[str, Any]:
         """
-        取得股票報價
+        取得股票報價（含快取）
         
         Args:
             code: 股票代碼（如 '2330'）
         """
+        # 檢查快取（10秒 TTL）
+        cached = cache.get_cached_data(code, 'quote')
+        if cached:
+            logger.debug(f"回傳報價快取: {code}")
+            cached['from_cache'] = True
+            return cached
+        
         try:
             if not self.is_login_valid():
                 login_result = self.login()
@@ -146,8 +156,12 @@ class ShioajiClient:
                 'amount': int(quote.get('amount', 0)),
                 'change': float(quote.get('change', 0)),
                 'change_percent': float(quote.get('pct_chg', 0)),
-                'timestamp': quote.get('datetime', '')
+                'timestamp': quote.get('datetime', ''),
+                'from_cache': False
             }
+            
+            # 存入快取（10秒）
+            cache.set_cached_data(code, 'quote', result, 10)
             
             return result
             
@@ -157,12 +171,20 @@ class ShioajiClient:
     
     def get_kline(self, code: str, days: int = 30) -> Dict[str, Any]:
         """
-        取得 K 線數據
+        取得 K 線數據（含快取）
         
         Args:
             code: 股票代碼（如 '2330'）
             days: 天數
         """
+        # 檢查快取（1小時 TTL）
+        cache_key = f"{code}_{days}"
+        cached = cache.get_cached_data(cache_key, 'kline')
+        if cached:
+            logger.debug(f"回傳K線快取: {cache_key}")
+            cached['from_cache'] = True
+            return cached
+        
         try:
             if not self.is_login_valid():
                 self.login()
@@ -199,13 +221,19 @@ class ShioajiClient:
             # 只保留最後 days 筆
             kline_data = kline_data[-days:]
             
-            return {
+            result = {
                 'success': True,
                 'code': code,
                 'name': contract.name,
                 'kline': kline_data,
-                'count': len(kline_data)
+                'count': len(kline_data),
+                'from_cache': False
             }
+            
+            # 存入快取（1小時）
+            cache.set_cached_data(cache_key, 'kline', result, 3600)
+            
+            return result
             
         except Exception as e:
             logger.error(f"取得K線失敗 {code}: {str(e)}")
@@ -213,11 +241,18 @@ class ShioajiClient:
     
     def get_chip(self, code: str) -> Dict[str, Any]:
         """
-        取得法人籌碼數據
+        取得法人籌碼數據（含快取）
         
         Args:
             code: 股票代碼（如 '2330'）
         """
+        # 檢查快取（1小時 TTL）
+        cached = cache.get_cached_data(code, 'chip')
+        if cached:
+            logger.debug(f"回傳法人籌碼快取: {code}")
+            cached['from_cache'] = True
+            return cached
+        
         try:
             if not self.is_login_valid():
                 self.login()
@@ -235,7 +270,7 @@ class ShioajiClient:
             # Shioaji 目前沒有直接的法人數據 API，這裡返回模擬結構
             # 實際實現可能需要使用其他數據源
             
-            return {
+            result = {
                 'success': True,
                 'code': code,
                 'name': contract.name,
@@ -250,8 +285,14 @@ class ShioajiClient:
                 'main_force_buy': 0,
                 'main_force_sell': 0,
                 'main_force_net': 0,
-                'date': datetime.now().strftime('%Y-%m-%d')
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'from_cache': False
             }
+            
+            # 存入快取（1小時）
+            cache.set_cached_data(code, 'chip', result, 3600)
+            
+            return result
             
         except Exception as e:
             logger.error(f"取得法人籌碼失敗 {code}: {str(e)}")
@@ -259,8 +300,16 @@ class ShioajiClient:
     
     def get_tickers(self) -> Dict[str, Any]:
         """
-        取得股票清單
+        取得股票清單（含快取）
         """
+        # 檢查快取（24小時 TTL）
+        # 使用 'all' 作為 stock_code 代表全市場股票清單
+        cached = cache.get_cached_data('all', 'ticker')
+        if cached:
+            logger.debug("回傳股票清單快取")
+            cached['from_cache'] = True
+            return cached
+        
         try:
             if not self.is_login_valid():
                 self.login()
@@ -277,11 +326,17 @@ class ShioajiClient:
                         'category': getattr(contract, 'category', '股票')
                     })
             
-            return {
+            result = {
                 'success': True,
                 'tickers': tickers,
-                'count': len(tickers)
+                'count': len(tickers),
+                'from_cache': False
             }
+            
+            # 存入快取（24小時）
+            cache.set_cached_data('all', 'ticker', result, 86400)
+            
+            return result
             
         except Exception as e:
             logger.error(f"取得股票清單失敗: {str(e)}")

@@ -6,6 +6,7 @@ import { RSIChart, MACDChart } from '../components/TechnicalIndicators';
 import MarketRegime from '../components/MarketRegime';
 import AdvancedFilters from '../components/AdvancedFilters';
 import CSVExport from '../components/CSVExport';
+import StockAutocomplete from '../components/StockAutocomplete';
 
 function StockAnalysis() {
   const { user } = useAuthStore();
@@ -350,12 +351,24 @@ function StockAnalysis() {
           {/* Stock Selector */}
           <div className="card">
             <h3 className="text-lg font-semibold mb-4">選擇股票</h3>
-            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+            <div className="mb-4">
+              <StockAutocomplete
+                value={selectedStock?.code || ''}
+                onChange={(code) => {
+                  const stock = stocks.find(s => s.code === code);
+                  if (stock) handleStockSelect(stock);
+                }}
+                onSelect={(stock) => handleStockSelect(stock)}
+                placeholder="搜尋股票代碼或名稱..."
+              />
+            </div>
+            {/* Quick select buttons */}
+            <div className="flex flex-wrap gap-2">
               {stocks.slice(0, 10).map((stock) => (
                 <button
                   key={stock.code}
                   onClick={() => handleStockSelect(stock)}
-                  className={`p-2 rounded-lg text-center transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-center transition-colors ${
                     selectedStock?.code === stock.code
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
